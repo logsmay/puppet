@@ -6,7 +6,7 @@ files:
     destination: /opt/puppet/
   - source: /extras/upstart/puppet.conf
     destination: /etc/init/
-  - source: /nginx/puppet
+  - source: /extras/nginx/puppet
     destination: /etc/nginx/sites-available/
 permissions:
   - object: /opt/puppet/
