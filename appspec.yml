@@ -1,4 +1,5 @@
 # appspec.yml for use with AWS CodeDeploy.
+version: 0.0
 os: linux
 files:
   - source: /
