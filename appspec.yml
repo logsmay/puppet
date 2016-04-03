@@ -2,4 +2,4 @@
 os: linux
 files:
   - source: /
-    destination: ~/app/puppet
+    destination: /home/ubuntu/app/puppet/
