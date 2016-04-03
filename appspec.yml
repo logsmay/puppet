@@ -1,0 +1,5 @@
+# appspec.yml for use with AWS CodeDeploy.
+os: linux
+files:
+  - source: /
+    destination: ~/app/puppet
