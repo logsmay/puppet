@@ -4,7 +4,7 @@ os: linux
 files:
   - source: /
     destination: /opt/puppet/
-  - source: /puppet.conf
+  - source: /extras/upstart/puppet.conf
     destination: /etc/init/
   - source: /nginx/puppet
     destination: /etc/nginx/sites-available/
