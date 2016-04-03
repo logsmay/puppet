@@ -3,4 +3,37 @@ version: 0.0
 os: linux
 files:
   - source: /
-    destination: /home/ubuntu/app/puppet/
+    destination: /opt/puppet/
+  - source: /puppet.conf
+    destination: /etc/init/
+  - source: /nginx/puppet
+    destination: /etc/nginx/sites-available/
+permissions:
+  - object: /opt/puppet/
+    pattern: "**"
+    owner: ubuntu
+    group: ubuntu
+    type:
+      - directory
+  - object: /opt/puppet/extras/
+    pattern: "*.sh"
+    mode: 744
+  - object: /etc/init/puppet.conf
+    owner: root
+    group: root
+  - object: /etc/nginx/sites-available/puppet
+    owner: root
+    group: root
+hooks:
+  ApplicationStop:
+    - location: extras/hooks/application-stop.sh
+      timeout: 180
+  BeforeInstall:
+    - location: extras/hooks/before-install.sh
+      timeout: 600
+  AfterInstall:
+    - location: extras/hooks/after-install.sh
+      timeout: 600
+  ApplicationStart:
+    - location: extras/hooks/application-start.sh
+      timeout: 180
