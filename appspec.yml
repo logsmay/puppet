@@ -11,10 +11,11 @@ files:
 permissions:
   - object: /opt/puppet/
     pattern: "**"
-    owner: ubuntu
-    group: ubuntu
+    owner: www-data
+    group: www-data
     type:
       - directory
+      - file
   - object: /opt/puppet/extras/
     pattern: "*.sh"
     mode: 744
