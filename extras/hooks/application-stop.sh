@@ -1,3 +1,5 @@
 #!/usr/bin/env bash
 
-sudo stop puppet
+if ( initctl status puppet | grep start ); then
+  initctl stop puppet
+fi
