@@ -1,13 +1,14 @@
 import bcrypt
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 from voluptuous import MultipleInvalid
 
 from models.puppet_model import Account
 from objects.io.output_manager import OutputManager
+from objects.io.response_codes import ResponseCodes
 from objects.puppet_base import PuppetBase
 from utils.input_validation.input_error_parser import InputErrorParser
 from utils.input_validation.input_validator import InputValidator
-from objects.io.response_codes import ResponseCodes
 
 
 class AccountBase(PuppetBase):
@@ -24,12 +25,17 @@ class AccountBase(PuppetBase):
             input_validator.validate(kwargs)
 
             # Check if account already exists
-            if self.has_account(kwargs['email']):
+            try:
+                if self.has_account(kwargs['email']):
+                    return _output.output(
+                        status=ResponseCodes.FORBIDDEN['accountExists'],
+                        data={
+                            'email': 'Email address is already associated with an existing account'
+                        }
+                    )
+            except SQLAlchemyError:
                 return _output.output(
-                    status=ResponseCodes.FORBIDDEN['accountExists'],
-                    data={
-                        'email': 'Email address is already associated with an existing account'
-                    }
+                    status=ResponseCodes.INTERNAL_SERVER_ERROR['internalError']
                 )
 
             # Hash the received password
@@ -44,7 +50,6 @@ class AccountBase(PuppetBase):
                 return _output.output(
                     status=ResponseCodes.OK['success']
                 )
-
             except SQLAlchemyError:
                 self.puppet_db.rollback()
 
@@ -61,10 +66,35 @@ class AccountBase(PuppetBase):
             )
 
     def has_account(self, email):
-        _count = self.puppet_db.query(
-            Account.email
-        ).filter(
-            Account.email == email
-        ).limit(1).all()
+        try:
+            self.puppet_db.query(
+                Account.email
+            ).filter(
+                Account.email == email
+            ).one()
 
-        return True if len(_count) > 0 else False
+            return True
+
+        except MultipleResultsFound:
+            return True
+
+        except NoResultFound:
+            return False
+
+        except SQLAlchemyError as e:
+            return e
+
+    def get_account(self, email):
+        try:
+            _account = self.puppet_db.query(
+                Account.email,
+                Account.first_name,
+                Account.last_name,
+                Account.password
+            ).filter(
+                Account.email == email
+            ).one()
+
+            return _account
+        except (NoResultFound, MultipleResultsFound, SQLAlchemyError) as e:
+            return e

@@ -1,10 +1,11 @@
 import configparser
 import os
+import redis
 
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.orm import scoped_session, sessionmaker, Session
 
-from models.puppet_model import PuppetModel, Account
+from models.puppet_model import PuppetModel
 
 
 class PuppetBase(object):
@@ -14,6 +15,9 @@ class PuppetBase(object):
         self.db_config.read(os.path.join(_basedir, 'config', 'credentials', 'db.ini'))
         self.db_session = {}
 
+        # ################# #
+        # MASTER DATA STORE #
+        # ################# #
         _engine = create_engine('mysql+mysqldb://%s:%s@%s/%s' % (
             self.db_config['PUPPET']['Username'],
             self.db_config['PUPPET']['Password'],
@@ -25,8 +29,17 @@ class PuppetBase(object):
         # declaratives can be accessed through a DBSession instance
         PuppetModel.metadata.bind = _engine
 
-        _db_session = sessionmaker(bind=_engine)
+        _db_session = scoped_session(sessionmaker(bind=_engine))
         self.db_session['puppet'] = _db_session()
+
+        # ################## #
+        # SESSION DATA CACHE #
+        # ################## #
+        self.db_session['session-cache'] = redis.StrictRedis(
+            host=self.db_config['SESSION-CACHE']['Host'],
+            port=self.db_config['SESSION-CACHE']['Port'],
+            db=self.db_config['SESSION-CACHE']['Database']
+        )
 
     def get_db(self, db_name) -> Session:
         if db_name in self.db_session:
