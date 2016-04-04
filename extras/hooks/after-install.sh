@@ -10,4 +10,4 @@ pip install -r /opt/puppet/requirements.txt
 # Deactivate virtual environment
 deactivate
 
-sudo ln -s /etc/nginx/sites-available/puppet /etc/nginx/sites-enabled
+sudo ln -sf /etc/nginx/sites-available/puppet /etc/nginx/sites-enabled
