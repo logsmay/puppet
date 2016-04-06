@@ -35,6 +35,7 @@ class SessionBase(AccountBase):
                 # Compare user password with hash
                 if self.verify_password_hash(kwargs['password'], _account.password):
                     _new_token = binascii.hexlify(os.urandom(SessionBase.AUTH_TOKEN_LENGTH))
+                    _new_token = _new_token.decode(encoding='utf-8')
 
                     try:
                         self.cache_db.set(_new_token, 'y')
