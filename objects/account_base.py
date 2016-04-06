@@ -39,7 +39,7 @@ class AccountBase(PuppetBase):
                 )
 
             # Hash the received password
-            kwargs['password'] = bcrypt.hashpw(bytes(kwargs['password'], encoding='utf8'), bcrypt.gensalt())
+            kwargs['password'] = self.__hash_password(kwargs['password'])
 
             try:
                 # Create a new account
@@ -98,3 +98,12 @@ class AccountBase(PuppetBase):
             return _account
         except (NoResultFound, MultipleResultsFound, SQLAlchemyError) as e:
             return e
+
+    @staticmethod
+    def __hash_password(password):
+        return bcrypt.hashpw(bytes(password, encoding='utf8'), bcrypt.gensalt())
+
+    @staticmethod
+    def verify_password_hash(password, hash):
+        return bcrypt.hashpw(bytes(password, encoding='utf8'),
+                             bytes(hash, encoding='utf8')) == bytes(hash, encoding='utf8')

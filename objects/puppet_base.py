@@ -38,7 +38,9 @@ class PuppetBase(object):
         self.db_session['session-cache'] = redis.StrictRedis(
             host=self.db_config['SESSION-CACHE']['Host'],
             port=self.db_config['SESSION-CACHE']['Port'],
-            db=self.db_config['SESSION-CACHE']['Database']
+            db=self.db_config['SESSION-CACHE']['Database'],
+            socket_connect_timeout=3,
+
         )
 
     def get_db(self, db_name) -> Session:

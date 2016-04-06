@@ -27,11 +27,13 @@ class InputErrorParser(object):
     def build_message(self, error):
         if self.__get_type(error) in self.messages:
             return {
-                self.__get_field(error): self.messages[self.__get_type(error)] % self.field_name[self.__get_field(error)]
+                self.__get_field(error): self.messages[self.__get_type(error)] % self.field_name[
+                    self.__get_field(error)]
             }
         elif self.__get_type(error) in self.default_messages:
             return {
-                self.__get_field(error): self.default_messages[self.__get_type(error)] % self.field_name[self.__get_field(error)]
+                self.__get_field(error): self.default_messages[self.__get_type(error)] % self.field_name[
+                    self.__get_field(error)]
             }
         else:
             return {

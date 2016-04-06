@@ -1,7 +1,7 @@
 import binascii
 import os
 
-import bcrypt
+from redis.exceptions import RedisError
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 from voluptuous import MultipleInvalid
@@ -30,23 +30,31 @@ class SessionBase(AccountBase):
             input_validator.validate(kwargs)
 
             try:
-                for account in self.get_account(kwargs['email']):
-                    # Compare user password with hash
-                    if bcrypt.hashpw(kwargs['password'], account.password) == account.password:
-                        _new_token = binascii.hexlify(os.urandom(SessionBase.AUTH_TOKEN_LENGTH))
+                _account = self.get_account(kwargs['email'])
+
+                # Compare user password with hash
+                if self.verify_password_hash(kwargs['password'], _account.password):
+                    _new_token = binascii.hexlify(os.urandom(SessionBase.AUTH_TOKEN_LENGTH))
+
+                    try:
                         self.cache_db.set(_new_token, 'y')
                         self.cache_db.expire(_new_token, SessionBase.AUTH_TOKEN_TTL)
 
+                    except RedisError as e:
                         return _output.output(
-                            status=ResponseCodes.OK['success'],
-                            data={
-                                'auth_token': _new_token
-                            }
+                            status=ResponseCodes.INTERNAL_SERVER_ERROR['internalError']
                         )
-                    else:
-                        return _output.output(
-                            status=ResponseCodes.UNAUTHORIZED['authError']
-                        )
+
+                    return _output.output(
+                        status=ResponseCodes.OK['success'],
+                        data={
+                            'auth_token': _new_token
+                        }
+                    )
+                else:
+                    return _output.output(
+                        status=ResponseCodes.UNAUTHORIZED['authError']
+                    )
             except (NoResultFound, MultipleResultsFound):
                 return _output.output(
                     status=ResponseCodes.UNAUTHORIZED['authError']
@@ -57,7 +65,7 @@ class SessionBase(AccountBase):
                 )
 
         except MultipleInvalid as e:
-            error_parser = InputErrorParser('create_account')
+            error_parser = InputErrorParser('create_session')
 
             return _output.output(
                 status=ResponseCodes.BAD_REQUEST['invalidQuery'],
