@@ -18,5 +18,5 @@ class InputSchema(object):
         })
 
         self.delete_session = Schema({
-            Required('auth_token'): All(str)
+            Required('auth_token'): All(str, Length(min=1))
         })
