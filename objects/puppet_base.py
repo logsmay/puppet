@@ -15,9 +15,9 @@ class PuppetBase(object):
         self.db_config.read(os.path.join(_basedir, 'config', 'credentials', 'db.ini'))
         self.db_session = {}
 
-        # ################# #
+        #####################
         # MASTER DATA STORE #
-        # ################# #
+        #####################
         _engine = create_engine('mysql+mysqldb://%s:%s@%s/%s' % (
             self.db_config['PUPPET']['Username'],
             self.db_config['PUPPET']['Password'],
@@ -32,9 +32,9 @@ class PuppetBase(object):
         _db_session = scoped_session(sessionmaker(bind=_engine))
         self.db_session['puppet'] = _db_session()
 
-        # ################## #
+        ######################
         # SESSION DATA CACHE #
-        # ################## #
+        ######################
         self.db_session['session-cache'] = redis.StrictRedis(
             host=self.db_config['SESSION-CACHE']['Host'],
             port=self.db_config['SESSION-CACHE']['Port'],
