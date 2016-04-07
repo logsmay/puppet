@@ -38,7 +38,7 @@ class SessionBase(AccountBase):
                     _new_token = _new_token.decode(encoding='utf-8')
 
                     try:
-                        self.cache_db.set(_new_token, 'y')
+                        self.cache_db.set(_new_token, _account.id)
                         self.cache_db.expire(_new_token, SessionBase.AUTH_TOKEN_TTL)
 
                     except RedisError as e:

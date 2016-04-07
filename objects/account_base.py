@@ -87,6 +87,7 @@ class AccountBase(PuppetBase):
     def get_account(self, email):
         try:
             _account = self.puppet_db.query(
+                Account.id,
                 Account.email,
                 Account.first_name,
                 Account.last_name,
