@@ -1,2 +1,3 @@
-.idea
+/.idea
+/extras/custom_authorizers/api_session_authorizer/api_session_authorizer.zip
 /__pycache__

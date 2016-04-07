@@ -14,8 +14,8 @@ from utils.input_validation.input_validator import InputValidator
 
 
 class SessionBase(AccountBase):
-    AUTH_TOKEN_LENGTH = 48
-    AUTH_TOKEN_TTL = 1800  # seconds
+    AUTH_TOKEN_LENGTH = 24
+    AUTH_TOKEN_TTL = 86400  # seconds
 
     def __init__(self):
         super(SessionBase, self).__init__()

@@ -39,8 +39,7 @@ class PuppetBase(object):
             host=self.db_config['SESSION-CACHE']['Host'],
             port=self.db_config['SESSION-CACHE']['Port'],
             db=self.db_config['SESSION-CACHE']['Database'],
-            socket_connect_timeout=3,
-
+            socket_connect_timeout=3
         )
 
     def get_db(self, db_name) -> Session:
