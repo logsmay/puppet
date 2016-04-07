@@ -14,13 +14,12 @@ def print_body(result):
 
 
 def test(payload):
-    _result = session.create_session(**payload)
+    _result = session.delete_session(**payload)
 
     print_status(_result)
     print_body(_result)
 
 
 test({
-    'email': 'thinknirmal@gmail.com',
-    'password': '12345678'
+    'auth_token': 'abcd'
 })

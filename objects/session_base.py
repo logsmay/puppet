@@ -72,3 +72,31 @@ class SessionBase(AccountBase):
                 status=ResponseCodes.BAD_REQUEST['invalidQuery'],
                 data=error_parser.translate_errors(e)
             )
+
+    def delete_session(self, **kwargs):
+        _output = OutputManager()
+
+        try:
+            # Validate user inputs
+            input_validator = InputValidator('delete_session')
+            input_validator.validate(kwargs)
+
+            try:
+                self.cache_db.delete(kwargs['auth_token'])
+
+            except RedisError as e:
+                return _output.output(
+                    status=ResponseCodes.INTERNAL_SERVER_ERROR['internalError']
+                )
+
+            return _output.output(
+                status=ResponseCodes.OK['success']
+            )
+
+        except MultipleInvalid as e:
+            error_parser = InputErrorParser('delete_session')
+
+            return _output.output(
+                status=ResponseCodes.BAD_REQUEST['invalidQuery'],
+                data=error_parser.translate_errors(e)
+            )
