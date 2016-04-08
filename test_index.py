@@ -1,7 +1,9 @@
 import json
 
+from objects.account_base import AccountBase
 from objects.session_base import SessionBase
 
+account = AccountBase()
 session = SessionBase()
 
 
@@ -14,12 +16,14 @@ def print_body(result):
 
 
 def test(payload):
-    _result = session.delete_session(**payload)
+    _result = account.update_account(**payload)
 
     print_status(_result)
     print_body(_result)
 
 
 test({
-    'auth_token': 'abcd'
+    'account_id': 5,
+    'first_name': 'Nirmal',
+    'password': '0987654321'
 })

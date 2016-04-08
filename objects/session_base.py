@@ -23,14 +23,14 @@ class SessionBase(AccountBase):
 
     def create_session(self, **kwargs):
         _output = OutputManager()
+        _validator_key = self.create_session.__name__
 
         try:
             # Validate user inputs
-            input_validator = InputValidator('create_session')
-            input_validator.validate(kwargs)
+            InputValidator(_validator_key).validate(kwargs)
 
             try:
-                _account = self.get_account(kwargs['email'])
+                _account = self.get_account(email=kwargs['email'])
 
                 # Compare user password with hash
                 if self.verify_password_hash(kwargs['password'], _account.password):
@@ -66,7 +66,7 @@ class SessionBase(AccountBase):
                 )
 
         except MultipleInvalid as e:
-            error_parser = InputErrorParser('create_session')
+            error_parser = InputErrorParser(_validator_key)
 
             return _output.output(
                 status=ResponseCodes.BAD_REQUEST['invalidQuery'],
@@ -75,11 +75,11 @@ class SessionBase(AccountBase):
 
     def delete_session(self, **kwargs):
         _output = OutputManager()
+        _validator_key = self.delete_session.__name__
 
         try:
             # Validate user inputs
-            input_validator = InputValidator('delete_session')
-            input_validator.validate(kwargs)
+            InputValidator(_validator_key).validate(kwargs)
 
             try:
                 self.cache_db.delete(kwargs['auth_token'])
@@ -94,7 +94,7 @@ class SessionBase(AccountBase):
             )
 
         except MultipleInvalid as e:
-            error_parser = InputErrorParser('delete_session')
+            error_parser = InputErrorParser(_validator_key)
 
             return _output.output(
                 status=ResponseCodes.BAD_REQUEST['invalidQuery'],
