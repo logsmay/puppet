@@ -1,4 +1,4 @@
-from voluptuous import Schema, Required, All, Length, Any
+from voluptuous import Schema, Optional, Required, All, Length, Any
 
 from config.input_validation.input_validators import InputValidators
 
@@ -15,11 +15,11 @@ class InputSchema(object):
         })
 
         self.update_account = Schema({
-            Required('account_id'): Any(),
-            'email': All(InputValidators.email()),
-            'first_name': All(str, Length(min=2)),
-            'last_name': All(str, Length(min=2)),
-            'password': All(str, Length(min=8))
+            Required('account_id'): Any(str, int),
+            Optional('email'): All(InputValidators.email()),
+            Optional('first_name'): All(str, Length(min=2)),
+            Optional('last_name'): All(str, Length(min=2)),
+            Optional('password'): All(str, Length(min=8))
         })
 
         self.create_session = Schema({
