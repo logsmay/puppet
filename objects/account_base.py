@@ -84,26 +84,32 @@ class AccountBase(PuppetBase):
                 # Hash the received password
                 _update_list[Account.password] = self.__hash_password(kwargs['password'])
 
-            try:
-                # Update table with new values
-                self.puppet_db.query(Account).filter(
-                    Account.id == kwargs['account_id']
-                ).update(
-                    _update_list
-                )
-
-                self.puppet_db.commit()
-
+            if not _update_list:
                 return _output.output(
-                    status=ResponseCodes.OK['success']
+                    status=ResponseCodes.BAD_REQUEST['invalidQuery']
                 )
 
-            except SQLAlchemyError:
-                self.puppet_db.rollback()
+            else:
+                try:
+                    # Update table with new values
+                    self.puppet_db.query(Account).filter(
+                        Account.id == kwargs['account_id']
+                    ).update(
+                        _update_list
+                    )
 
-                return _output.output(
-                    status=ResponseCodes.INTERNAL_SERVER_ERROR['internalError']
-                )
+                    self.puppet_db.commit()
+
+                    return _output.output(
+                        status=ResponseCodes.OK['success']
+                    )
+
+                except SQLAlchemyError:
+                    self.puppet_db.rollback()
+
+                    return _output.output(
+                        status=ResponseCodes.INTERNAL_SERVER_ERROR['internalError']
+                    )
 
         except MultipleInvalid as e:
             error_parser = InputErrorParser(_validator_key)

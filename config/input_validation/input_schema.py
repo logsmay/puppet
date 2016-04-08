@@ -1,11 +1,10 @@
-from voluptuous import Schema, Required, All, Length
+from voluptuous import Schema, Required, All, Length, Any
 
 from config.input_validation.input_validators import InputValidators
 
 
 class InputSchema(object):
     def __init__(self):
-
         # ## Account ## #
 
         self.create_account = Schema({
@@ -16,7 +15,7 @@ class InputSchema(object):
         })
 
         self.update_account = Schema({
-            Required('account_id'): int,
+            Required('account_id'): Any(),
             'email': All(InputValidators.email()),
             'first_name': All(str, Length(min=2)),
             'last_name': All(str, Length(min=2)),
