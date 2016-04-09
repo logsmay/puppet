@@ -2,6 +2,7 @@ import configparser
 import os
 
 import redis
+from redis import StrictRedis
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker, Session
 
@@ -14,6 +15,7 @@ class PuppetBase(object):
         self.db_config = configparser.ConfigParser()
         self.db_config.read(os.path.join(_basedir, 'config', 'credentials', 'db.ini'))
         self.db_session = {}
+        self.cache_session = {}
 
         #####################
         # MASTER DATA STORE #
@@ -35,7 +37,7 @@ class PuppetBase(object):
         ######################
         # SESSION DATA CACHE #
         ######################
-        self.db_session['session-cache'] = redis.StrictRedis(
+        self.cache_session['sessions'] = redis.StrictRedis(
             host=self.db_config['SESSION-CACHE']['Host'],
             port=self.db_config['SESSION-CACHE']['Port'],
             db=self.db_config['SESSION-CACHE']['Database'],
@@ -47,3 +49,9 @@ class PuppetBase(object):
             return self.db_session[db_name]
         else:
             raise Exception('Database not found')
+
+    def get_cache(self, cache_name) -> StrictRedis:
+        if cache_name in self.cache_session:
+            return self.cache_session[cache_name]
+        else:
+            raise Exception('Cache session not found')

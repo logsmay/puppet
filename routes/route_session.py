@@ -1,7 +1,5 @@
 import json
 
-from falcon.util import uri
-
 from objects.session_base import SessionBase
 
 session = SessionBase()
@@ -10,16 +8,19 @@ session = SessionBase()
 class RouteSession(object):
     @staticmethod
     def on_post(req, resp):
-        _payload = uri.parse_query_string(req.query_string)
+        _payload = json.loads(req.stream.read())
 
         _result = session.create_session(**_payload)
+
         resp.status = _result.get('status', {}).get('code')
         resp.body = json.dumps(_result)
 
     @staticmethod
     def on_delete(req, resp):
-        _payload = uri.parse_query_string(req.query_string)
+        _auth_token = req.get_header('Authorization',
+                                     required=True)  # Do not use req.auth() as it doesn't offer required= option.
 
-        _result = session.delete_session(**_payload)
+        _result = SessionBase().delete_session(auth_token=_auth_token)
+
         resp.status = _result.get('status', {}).get('code')
         resp.body = json.dumps(_result)

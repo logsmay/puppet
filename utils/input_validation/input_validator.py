@@ -9,6 +9,12 @@ class InputValidator(object):
         self.schema = getattr(_input_schema, schema_name)
 
     def validate(self, payload):
+        """
+        Validates given inputs against predefined schema.
+
+        :param payload: User inputs
+        :return: Boolean
+        """
         try:
             self.schema(payload)
             return True

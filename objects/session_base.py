@@ -17,41 +17,43 @@ class SessionBase(AccountBase):
     AUTH_TOKEN_LENGTH = 24
     AUTH_TOKEN_TTL = 86400  # seconds
 
-    def __init__(self):
-        super(SessionBase, self).__init__()
-        self.cache_db = self.get_db('session-cache')
+    def __init__(self, account_id=None):
+        super(SessionBase, self).__init__(account_id=account_id)
 
-    def create_session(self, **kwargs):
+    def create_session(self, **payload):
         _output = OutputManager()
         _validator_key = self.create_session.__name__
 
         try:
             # Validate user inputs
-            InputValidator(_validator_key).validate(kwargs)
+            InputValidator(_validator_key).validate(payload)
 
             try:
-                _account = self.get_account(email=kwargs['email'])
+                _account = self.get_account(email=payload['email'])
 
                 # Compare user password with hash
-                if self.verify_password_hash(kwargs['password'], _account.password):
+                if self.verify_password_hash(payload['password'], _account.password):
                     _new_token = binascii.hexlify(os.urandom(SessionBase.AUTH_TOKEN_LENGTH))
                     _new_token = _new_token.decode(encoding='utf-8')
 
                     try:
-                        self.cache_db.set(_new_token, _account.id)
-                        self.cache_db.expire(_new_token, SessionBase.AUTH_TOKEN_TTL)
+                        self.session_db.set(_new_token, _account.id)
+                        self.session_db.expire(_new_token, SessionBase.AUTH_TOKEN_TTL)
+                        self.session_db.rpush(_account.id, _new_token)
+                        self.session_db.ltrim(_account.id, 0, 999)
+
+                        return _output.output(
+                            status=ResponseCodes.OK['success'],
+                            data={
+                                'auth_token': _new_token
+                            }
+                        )
 
                     except RedisError as e:
                         return _output.output(
                             status=ResponseCodes.INTERNAL_SERVER_ERROR['internalError']
                         )
 
-                    return _output.output(
-                        status=ResponseCodes.OK['success'],
-                        data={
-                            'auth_token': _new_token
-                        }
-                    )
                 else:
                     return _output.output(
                         status=ResponseCodes.UNAUTHORIZED['authError']
@@ -73,16 +75,16 @@ class SessionBase(AccountBase):
                 data=error_parser.translate_errors(e)
             )
 
-    def delete_session(self, **kwargs):
+    def delete_session(self, **payload):
         _output = OutputManager()
         _validator_key = self.delete_session.__name__
 
         try:
             # Validate user inputs
-            InputValidator(_validator_key).validate(kwargs)
+            InputValidator(_validator_key).validate(payload)
 
             try:
-                self.cache_db.delete(kwargs['auth_token'])
+                self.session_db.delete(payload['auth_token'])
 
             except RedisError as e:
                 return _output.output(
