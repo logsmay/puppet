@@ -15,7 +15,6 @@ class InputSchema(object):
         })
 
         self.update_account = Schema({
-            Required('account_id'): Any(str, int),
             Optional('email'): All(InputValidators.email()),
             Optional('first_name'): All(str, Length(min=2)),
             Optional('last_name'): All(str, Length(min=2)),
