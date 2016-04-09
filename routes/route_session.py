@@ -1,6 +1,7 @@
 import json
 
 from objects.session_base import SessionBase
+from utils.functions import from_bytes
 
 session = SessionBase()
 
@@ -8,7 +9,7 @@ session = SessionBase()
 class RouteSession(object):
     @staticmethod
     def on_post(req, resp):
-        _payload = json.loads(req.stream.read())
+        _payload = json.loads(from_bytes(req.stream.read()))
 
         _result = session.create_session(**_payload)
 
