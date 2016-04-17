@@ -81,33 +81,20 @@ class SessionBase(AccountBase):
                 data=error_parser.translate_errors(e)
             )
 
-    def delete_session(self, **payload):
+    def delete_session(self):
         _output = OutputManager()
-        _validator_key = self.delete_session.__name__
 
         try:
-            # Validate user inputs
-            InputValidator(_validator_key).validate(payload)
+            self.session_db.delete(self.auth_token)
 
-            try:
-                self.session_db.delete(payload['auth_token'])
-
-            except RedisError as e:
-                return _output.output(
-                    status=ResponseCodes.INTERNAL_SERVER_ERROR['internalError']
-                )
-
+        except RedisError:
             return _output.output(
-                status=ResponseCodes.OK['success']
+                status=ResponseCodes.INTERNAL_SERVER_ERROR['internalError']
             )
 
-        except MultipleInvalid as e:
-            error_parser = InputErrorParser(_validator_key)
-
-            return _output.output(
-                status=ResponseCodes.BAD_REQUEST['invalidQuery'],
-                data=error_parser.translate_errors(e)
-            )
+        return _output.output(
+            status=ResponseCodes.OK['success']
+        )
 
     def __set_session(self, auth_token):
         _output = OutputManager()
@@ -122,3 +109,4 @@ class SessionBase(AccountBase):
         else:
             self.session_db.expire(auth_token, SessionBase.AUTH_TOKEN_TTL)
             self.account_id = _account_id
+            self.auth_token = auth_token

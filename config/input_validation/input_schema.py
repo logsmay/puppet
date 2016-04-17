@@ -25,7 +25,3 @@ class InputSchema(object):
             Required('email'): All(InputValidators.email()),
             Required('password'): str
         })
-
-        self.delete_session = Schema({
-            Required('auth_token'): All(str, Length(min=1))
-        })

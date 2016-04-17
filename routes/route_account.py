@@ -17,12 +17,10 @@ class RouteAccount(object):
 
     @staticmethod
     def on_put(req, resp):
-        # Authorization header
-        _auth_token = req.auth()
         # Request body
         _payload = json.loads(str(req.stream.read(), encoding='utf-8'))
         # Execution
-        _result = SessionBase(auth_token=_auth_token).update_account(**_payload)
+        _result = SessionBase(auth_token=req.auth).update_account(**_payload)
         # Response handlers
         resp.status = _result.get('status', {}).get('code')
         resp.body = json.dumps(_result)
