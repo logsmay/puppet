@@ -17,8 +17,14 @@ class SessionBase(AccountBase):
     AUTH_TOKEN_LENGTH = 24
     AUTH_TOKEN_TTL = 86400  # seconds
 
-    def __init__(self, account_id=None):
-        super(SessionBase, self).__init__(account_id=account_id)
+    def __init__(self, account_id=None, auth_token=None):
+
+        super(SessionBase, self).__init__()
+
+        if auth_token:
+            self.__set_session(auth_token)
+        elif account_id:
+            self.account_id = account_id
 
     def create_session(self, **payload):
         _output = OutputManager()
@@ -102,3 +108,17 @@ class SessionBase(AccountBase):
                 status=ResponseCodes.BAD_REQUEST['invalidQuery'],
                 data=error_parser.translate_errors(e)
             )
+
+    def __set_session(self, auth_token):
+        _output = OutputManager()
+
+        _account_id = self.session_db.get(auth_token)
+
+        if not _account_id:
+            return _output.output(
+                status=ResponseCodes.UNAUTHORIZED['authError']
+            )
+
+        else:
+            self.session_db.expire(auth_token, SessionBase.AUTH_TOKEN_TTL)
+            self.account_id = _account_id

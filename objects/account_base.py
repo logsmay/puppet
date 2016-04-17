@@ -8,7 +8,6 @@ from models.puppet_model import Account
 from objects.io.output_manager import OutputManager
 from objects.io.response_codes import ResponseCodes
 from objects.puppet_base import PuppetBase
-from utils.functions import to_bytes
 from utils.input_validation.input_error_parser import InputErrorParser
 from utils.input_validation.input_validator import InputValidator
 
@@ -210,9 +209,9 @@ class AccountBase(PuppetBase):
 
     @staticmethod
     def __hash_password(password):
-        return bcrypt.hashpw(to_bytes(password), bcrypt.gensalt())
+        return bcrypt.hashpw(bytes(password), bcrypt.gensalt())
 
     @staticmethod
     def verify_password_hash(password, pw_hash):
-        return bcrypt.hashpw(to_bytes(password),
-                             to_bytes(pw_hash)) == to_bytes(pw_hash)
+        return bcrypt.hashpw(bytes(password),
+                             bytes(pw_hash)) == bytes(pw_hash)

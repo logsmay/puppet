@@ -1,25 +1,28 @@
 import json
 
 from objects.account_base import AccountBase
-from utils.functions import from_bytes
+from objects.session_base import SessionBase
 
 
 class RouteAccount(object):
     @staticmethod
     def on_post(req, resp):
-        _payload = json.loads(from_bytes(req.stream.read()))
-
+        # Request body
+        _payload = json.loads(str(req.stream.read()))
+        # Execution
         _result = AccountBase().create_account(**_payload)
-
+        # Response handlers
         resp.status = _result.get('status', {}).get('code')
         resp.body = json.dumps(_result)
 
     @staticmethod
     def on_put(req, resp):
-        _account_id = req.get_header('auth-account-id', required=True)
-        _payload = json.loads(from_bytes(req.stream.read()))
-
-        _result = AccountBase(_account_id).update_account(**_payload)
-
+        # Authorization header
+        _auth_token = req.auth()
+        # Request body
+        _payload = json.loads(str(req.stream.read()))
+        # Execution
+        _result = SessionBase(auth_token=_auth_token).update_account(**_payload)
+        # Response handlers
         resp.status = _result.get('status', {}).get('code')
         resp.body = json.dumps(_result)
