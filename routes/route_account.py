@@ -8,7 +8,7 @@ class RouteAccount(object):
     @staticmethod
     def on_post(req, resp):
         # Request body
-        _payload = json.loads(str(req.stream.read()))
+        _payload = json.loads(str(req.stream.read(), encoding='utf-8'))
         # Execution
         _result = AccountBase().create_account(**_payload)
         # Response handlers
@@ -20,7 +20,7 @@ class RouteAccount(object):
         # Authorization header
         _auth_token = req.auth()
         # Request body
-        _payload = json.loads(str(req.stream.read()))
+        _payload = json.loads(str(req.stream.read(), encoding='utf-8'))
         # Execution
         _result = SessionBase(auth_token=_auth_token).update_account(**_payload)
         # Response handlers

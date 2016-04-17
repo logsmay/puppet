@@ -8,7 +8,7 @@ session = SessionBase()
 class RouteSession(object):
     @staticmethod
     def on_post(req, resp):
-        _payload = json.loads(str(req.stream.read()))
+        _payload = json.loads(str(req.stream.read(), encoding='utf-8'))
 
         _result = session.create_session(**_payload)
 

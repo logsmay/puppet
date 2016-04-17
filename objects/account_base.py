@@ -209,9 +209,9 @@ class AccountBase(PuppetBase):
 
     @staticmethod
     def __hash_password(password):
-        return bcrypt.hashpw(bytes(password), bcrypt.gensalt())
+        return bcrypt.hashpw(bytes(password, encoding='utf-8'), bcrypt.gensalt())
 
     @staticmethod
     def verify_password_hash(password, pw_hash):
-        return bcrypt.hashpw(bytes(password),
-                             bytes(pw_hash)) == bytes(pw_hash)
+        return bcrypt.hashpw(bytes(password, encoding='utf-8'),
+                             bytes(pw_hash, encoding='utf-8')) == bytes(pw_hash, encoding='utf-8')
