@@ -155,7 +155,7 @@ class AccountBase(PuppetBase):
                 return False
 
             except SQLAlchemyError as e:
-                return e
+                raise e
 
         if email:
             try:
@@ -174,7 +174,7 @@ class AccountBase(PuppetBase):
                 return False
 
             except SQLAlchemyError as e:
-                return e
+                raise e
 
     def get_account(self, account_id=None, email=None):
         if account_id:
@@ -191,7 +191,7 @@ class AccountBase(PuppetBase):
 
                 return _account
             except (NoResultFound, MultipleResultsFound, SQLAlchemyError) as e:
-                return e
+                raise e
 
         if email:
             try:
@@ -207,7 +207,7 @@ class AccountBase(PuppetBase):
 
                 return _account
             except (NoResultFound, MultipleResultsFound, SQLAlchemyError) as e:
-                return e
+                raise e
 
     @staticmethod
     def __hash_password(password):
