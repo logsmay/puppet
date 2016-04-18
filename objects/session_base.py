@@ -1,30 +1,52 @@
 import binascii
 import os
 
+import bcrypt
 from redis.exceptions import RedisError
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 from voluptuous import MultipleInvalid
 
-from objects.account_base import AccountBase
+from models.puppet_model import Account
 from objects.io.output_manager import OutputManager
 from objects.io.response_codes import ResponseCodes
+from objects.puppet_base import PuppetBase
 from utils.input_validation.input_error_parser import InputErrorParser
 from utils.input_validation.input_validator import InputValidator
 
 
-class SessionBase(AccountBase):
+class SessionBase(PuppetBase):
     AUTH_TOKEN_LENGTH = 24
     AUTH_TOKEN_TTL = 86400  # seconds
 
-    def __init__(self, account_id=None, auth_token=None):
+    def __init__(self, account_id=None):
 
         super(SessionBase, self).__init__()
 
+        self.puppet_db = self.get_db('puppet')
+        self.session_db = self.get_cache('sessions')
+
+        self.account_id = account_id
+        self.auth_token = None
+
+    def get_account_id(self):
+        return self.account_id
+
+    def get_auth_token(self):
+        return self.auth_token
+
+    def register_auth_token(self, auth_token=None):
         if auth_token:
-            self.__set_session(auth_token)
-        elif account_id:
-            self.account_id = account_id
+            _account_id = self.session_db.get(auth_token)
+
+            if _account_id:
+                self.session_db.expire(auth_token, SessionBase.AUTH_TOKEN_TTL)
+                self.account_id = _account_id
+                self.auth_token = auth_token
+
+    def protect(self):
+        if not self.account_id:
+            raise InvalidSession('Authorization failure')
 
     def create_session(self, **payload):
         _output = OutputManager()
@@ -35,10 +57,10 @@ class SessionBase(AccountBase):
             InputValidator(_validator_key).validate(payload)
 
             try:
-                _account = self.get_account(email=payload['email'])
+                _account = self.__get_account(email=payload['email'])
 
                 # Compare user password with hash
-                if self.verify_password_hash(payload['password'], _account.password):
+                if self.__verify_password_hash(payload['password'], _account.password):
                     _new_token = binascii.hexlify(os.urandom(SessionBase.AUTH_TOKEN_LENGTH))
                     _new_token = _new_token.decode(encoding='utf-8')
 
@@ -99,30 +121,69 @@ class SessionBase(AccountBase):
                 status=ResponseCodes.OK['success']
             )
 
-        except InvalidToken:
+        except InvalidSession:
             return _output.output(
                 status=ResponseCodes.UNAUTHORIZED['authError']
             )
 
-    def __set_session(self, auth_token):
-        _output = OutputManager()
+    def delete_all_sessions(self):
+        try:
+            _account_tokens = self.session_db.lrange(self.account_id, 0, -1)
+            self.session_db.delete(*_account_tokens)
 
-        _account_id = self.session_db.get(auth_token)
+        except RedisError:
+            raise SessionError('Session database failure')
 
-        if not _account_id:
-            return _output.output(
-                status=ResponseCodes.UNAUTHORIZED['authError']
-            )
+    def __get_account(self, account_id=None, email=None):
+        if account_id:
+            try:
+                _account = self.puppet_db.query(
+                    Account.id,
+                    Account.email,
+                    Account.first_name,
+                    Account.last_name,
+                    Account.password
+                ).filter(
+                    Account.id == account_id
+                ).one()
 
-        else:
-            self.session_db.expire(auth_token, SessionBase.AUTH_TOKEN_TTL)
-            self.account_id = _account_id
-            self.auth_token = auth_token
+                return _account
+            except (NoResultFound, MultipleResultsFound, SQLAlchemyError) as e:
+                raise e
 
-    def protect(self):
-        if not self.account_id:
-            raise InvalidToken('Authorization token required')
+        if email:
+            try:
+                _account = self.puppet_db.query(
+                    Account.id,
+                    Account.email,
+                    Account.first_name,
+                    Account.last_name,
+                    Account.password
+                ).filter(
+                    Account.email == email
+                ).one()
+
+                return _account
+            except (NoResultFound, MultipleResultsFound, SQLAlchemyError) as e:
+                raise e
+
+    @staticmethod
+    def __hash_password(password):
+        return bcrypt.hashpw(bytes(password, encoding='utf-8'), bcrypt.gensalt())
+
+    @staticmethod
+    def __verify_password_hash(password, pw_hash):
+        return bcrypt.hashpw(bytes(password, encoding='utf-8'),
+                             bytes(pw_hash, encoding='utf-8')) == bytes(pw_hash, encoding='utf-8')
 
 
-class InvalidToken(Exception):
-    pass
+class InvalidSession(ValueError):
+    def __init__(self, message, *args):
+        self.message = message  # without this you may get DeprecationWarning
+        super(InvalidSession, self).__init__(message, *args)
+
+
+class SessionError(Exception):
+    def __init__(self, message, *args):
+        self.message = message  # without this you may get DeprecationWarning
+        super(SessionError, self).__init__(message, *args)

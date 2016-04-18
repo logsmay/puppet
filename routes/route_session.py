@@ -15,7 +15,11 @@ class RouteSession(object):
 
     @staticmethod
     def on_delete(req, resp):
-        _result = SessionBase(auth_token=req.auth).delete_session()
+        _session = SessionBase()
+
+        # Authenticated execution
+        _session.register_auth_token(req.auth)
+        _result = _session.delete_session()
 
         resp.status = _result.get('status', {}).get('code')
         resp.body = json.dumps(_result)

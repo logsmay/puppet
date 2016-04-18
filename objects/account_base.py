@@ -1,5 +1,3 @@
-import bcrypt
-from redis import RedisError
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 from voluptuous import MultipleInvalid
@@ -7,22 +5,14 @@ from voluptuous import MultipleInvalid
 from models.puppet_model import Account
 from objects.io.output_manager import OutputManager
 from objects.io.response_codes import ResponseCodes
-from objects.puppet_base import PuppetBase
+from objects.session_base import SessionBase, SessionError, InvalidSession
 from utils.input_validation.input_error_parser import InputErrorParser
 from utils.input_validation.input_validator import InputValidator
 
 
-class AccountBase(PuppetBase):
+class AccountBase(SessionBase):
     def __init__(self, account_id=None):
-        super(AccountBase, self).__init__()
-
-        if account_id:
-            self.account_id = account_id
-        else:
-            self.account_id = None
-
-        self.puppet_db = self.get_db('puppet')
-        self.session_db = self.get_cache('sessions')
+        super(AccountBase, self).__init__(account_id=account_id)
 
     def create_account(self, **payload):
         _output = OutputManager()
@@ -34,7 +24,7 @@ class AccountBase(PuppetBase):
 
             # Check if account already exists
             try:
-                if self.has_account(email=payload['email']):
+                if self.__has_account(email=payload['email']):
                     return _output.output(
                         status=ResponseCodes.FORBIDDEN['accountExists'],
                         data={
@@ -75,145 +65,93 @@ class AccountBase(PuppetBase):
 
     def update_account(self, **payload):
         _output = OutputManager()
-        _validator_key = self.update_account.__name__
-        _update_list = {}
 
         try:
-            # Validate user inputs
-            InputValidator(_validator_key).validate(payload)
+            self.protect()
 
-            if 'first_name' in payload:
-                _update_list[Account.first_name] = payload['first_name']
+            _validator_key = self.update_account.__name__
+            _update_list = {}
 
-            if 'last_name' in payload:
-                _update_list[Account.last_name] = payload['last_name']
+            try:
+                # Validate user inputs
+                InputValidator(_validator_key).validate(payload)
 
-            if 'password' in payload:
-                # Hash the received password
-                _update_list[Account.password] = self.__hash_password(payload['password'])
+                if 'first_name' in payload:
+                    _update_list[Account.first_name] = payload['first_name']
 
-            if not _update_list:
+                if 'last_name' in payload:
+                    _update_list[Account.last_name] = payload['last_name']
+
+                if 'password' in payload:
+                    # Hash the received password
+                    _update_list[Account.password] = self.__hash_password(payload['password'])
+
+                if not _update_list:
+                    return _output.output(
+                        status=ResponseCodes.BAD_REQUEST['invalidQuery']
+                    )
+
+                else:
+                    try:
+                        # Update table with new values
+                        self.puppet_db.query(Account).filter(
+                            Account.id == self.get_account_id()
+                        ).update(
+                            _update_list
+                        )
+
+                        if 'password' in payload:
+                            try:
+                                self.delete_all_sessions()
+
+                            except SessionError:
+                                self.puppet_db.rollback()
+
+                                return _output.output(
+                                    status=ResponseCodes.INTERNAL_SERVER_ERROR['internalError']
+                                )
+
+                        self.puppet_db.commit()
+
+                        return _output.output(
+                            status=ResponseCodes.OK['success']
+                        )
+
+                    except SQLAlchemyError:
+                        self.puppet_db.rollback()
+
+                        return _output.output(
+                            status=ResponseCodes.INTERNAL_SERVER_ERROR['internalError']
+                        )
+
+            except MultipleInvalid as e:
+                error_parser = InputErrorParser(_validator_key)
+
                 return _output.output(
-                    status=ResponseCodes.BAD_REQUEST['invalidQuery']
+                    status=ResponseCodes.BAD_REQUEST['invalidQuery'],
+                    data=error_parser.translate_errors(e)
                 )
 
-            else:
-                try:
-                    # Update table with new values
-                    self.puppet_db.query(Account).filter(
-                        Account.id == self.account_id
-                    ).update(
-                        _update_list
-                    )
-
-                    if 'password' in payload:
-                        try:
-                            _account_tokens = self.session_db.lrange(self.account_id, 0, -1)
-                            self.session_db.delete(*_account_tokens)
-
-                        except RedisError as e:
-                            return _output.output(
-                                status=ResponseCodes.INTERNAL_SERVER_ERROR['internalError']
-                            )
-
-                    self.puppet_db.commit()
-
-                    return _output.output(
-                        status=ResponseCodes.OK['success']
-                    )
-
-                except SQLAlchemyError:
-                    self.puppet_db.rollback()
-
-                    return _output.output(
-                        status=ResponseCodes.INTERNAL_SERVER_ERROR['internalError']
-                    )
-
-        except MultipleInvalid as e:
-            error_parser = InputErrorParser(_validator_key)
-
+        except InvalidSession:
             return _output.output(
-                status=ResponseCodes.BAD_REQUEST['invalidQuery'],
-                data=error_parser.translate_errors(e)
+                status=ResponseCodes.UNAUTHORIZED['authError']
             )
 
-    def has_account(self, account_id=None, email=None):
-        if account_id:
-            try:
-                self.puppet_db.query(
-                    Account.id
-                ).filter(
-                    Account.id == account_id
-                ).one()
+    def __has_account(self, email):
+        try:
+            self.puppet_db.query(
+                Account.email
+            ).filter(
+                Account.email == email
+            ).one()
 
-                return True
+            return True
 
-            except MultipleResultsFound:
-                return True
+        except MultipleResultsFound:
+            return True
 
-            except NoResultFound:
-                return False
+        except NoResultFound:
+            return False
 
-            except SQLAlchemyError as e:
-                raise e
-
-        if email:
-            try:
-                self.puppet_db.query(
-                    Account.email
-                ).filter(
-                    Account.email == email
-                ).one()
-
-                return True
-
-            except MultipleResultsFound:
-                return True
-
-            except NoResultFound:
-                return False
-
-            except SQLAlchemyError as e:
-                raise e
-
-    def get_account(self, account_id=None, email=None):
-        if account_id:
-            try:
-                _account = self.puppet_db.query(
-                    Account.id,
-                    Account.email,
-                    Account.first_name,
-                    Account.last_name,
-                    Account.password
-                ).filter(
-                    Account.id == account_id
-                ).one()
-
-                return _account
-            except (NoResultFound, MultipleResultsFound, SQLAlchemyError) as e:
-                raise e
-
-        if email:
-            try:
-                _account = self.puppet_db.query(
-                    Account.id,
-                    Account.email,
-                    Account.first_name,
-                    Account.last_name,
-                    Account.password
-                ).filter(
-                    Account.email == email
-                ).one()
-
-                return _account
-            except (NoResultFound, MultipleResultsFound, SQLAlchemyError) as e:
-                raise e
-
-    @staticmethod
-    def __hash_password(password):
-        return bcrypt.hashpw(bytes(password, encoding='utf-8'), bcrypt.gensalt())
-
-    @staticmethod
-    def verify_password_hash(password, pw_hash):
-        return bcrypt.hashpw(bytes(password, encoding='utf-8'),
-                             bytes(pw_hash, encoding='utf-8')) == bytes(pw_hash, encoding='utf-8')
+        except SQLAlchemyError as e:
+            raise e
