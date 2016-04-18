@@ -18,6 +18,8 @@ class AccountBase(PuppetBase):
 
         if account_id:
             self.account_id = account_id
+        else:
+            self.account_id = None
 
         self.puppet_db = self.get_db('puppet')
         self.session_db = self.get_cache('sessions')
