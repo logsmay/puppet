@@ -82,6 +82,7 @@ class SessionBase(AccountBase):
             )
 
     def delete_session(self):
+        self.protect()
         _output = OutputManager()
 
         try:
@@ -110,3 +111,11 @@ class SessionBase(AccountBase):
             self.session_db.expire(auth_token, SessionBase.AUTH_TOKEN_TTL)
             self.account_id = _account_id
             self.auth_token = auth_token
+
+    def protect(self):
+        if not self.account_id:
+            _output = OutputManager()
+
+            return _output.output(
+                status=ResponseCodes.UNAUTHORIZED['authError']
+            )
