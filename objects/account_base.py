@@ -37,7 +37,7 @@ class AccountBase(SessionBase):
                 )
 
             # Hash the received password
-            payload['password'] = self.__hash_password(payload['password'])
+            payload['password'] = self.hash_password(payload['password'])
 
             try:
                 # Create a new account
@@ -84,7 +84,7 @@ class AccountBase(SessionBase):
 
                 if 'password' in payload:
                     # Hash the received password
-                    _update_list[Account.password] = self.__hash_password(payload['password'])
+                    _update_list[Account.password] = self.hash_password(payload['password'])
 
                 if not _update_list:
                     return _output.output(

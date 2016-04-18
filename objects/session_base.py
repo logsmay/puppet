@@ -168,7 +168,7 @@ class SessionBase(PuppetBase):
                 raise e
 
     @staticmethod
-    def __hash_password(password):
+    def hash_password(password):
         return bcrypt.hashpw(bytes(password, encoding='utf-8'), bcrypt.gensalt())
 
     @staticmethod
