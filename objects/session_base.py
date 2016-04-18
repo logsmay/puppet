@@ -82,20 +82,27 @@ class SessionBase(AccountBase):
             )
 
     def delete_session(self):
-        self.protect()
         _output = OutputManager()
 
         try:
-            self.session_db.delete(self.auth_token)
+            self.protect()
 
-        except RedisError:
+            try:
+                self.session_db.delete(self.auth_token)
+
+            except RedisError:
+                return _output.output(
+                    status=ResponseCodes.INTERNAL_SERVER_ERROR['internalError']
+                )
+
             return _output.output(
-                status=ResponseCodes.INTERNAL_SERVER_ERROR['internalError']
+                status=ResponseCodes.OK['success']
             )
 
-        return _output.output(
-            status=ResponseCodes.OK['success']
-        )
+        except InvalidToken:
+            return _output.output(
+                status=ResponseCodes.UNAUTHORIZED['authError']
+            )
 
     def __set_session(self, auth_token):
         _output = OutputManager()
@@ -114,8 +121,8 @@ class SessionBase(AccountBase):
 
     def protect(self):
         if not self.account_id:
-            _output = OutputManager()
+            raise InvalidToken('Authorization token required')
 
-            return _output.output(
-                status=ResponseCodes.UNAUTHORIZED['authError']
-            )
+
+class InvalidToken(Exception):
+    pass
