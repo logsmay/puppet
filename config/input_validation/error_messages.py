@@ -1,16 +1,19 @@
 class ErrorMessages:
     default = {
-        'LengthInvalid': '%s is too short'
+        'LengthInvalid': 'Invalid length'
     }
 
+    ''' Messages can be overridden below for each method '''
+    """
     create_account = {
-        'LengthInvalid': '%s is too short'
+        'LengthInvalid': 'Invalid length'
     }
 
     update_account = {
-        'LengthInvalid': '%s is too short'
+        'LengthInvalid': 'Invalid length'
     }
 
     create_session = {
-        'LengthInvalid': '%s is too short'
+        'LengthInvalid': 'Invalid length'
     }
+    """

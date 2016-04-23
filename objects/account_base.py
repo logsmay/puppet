@@ -56,7 +56,7 @@ class AccountBase(SessionBase):
                 )
 
         except MultipleInvalid as e:
-            error_parser = InputErrorParser(_validator_key)
+            error_parser = InputErrorParser()
 
             return _output.output(
                 status=ResponseCodes.BAD_REQUEST['invalidQuery'],
@@ -125,7 +125,7 @@ class AccountBase(SessionBase):
                         )
 
             except MultipleInvalid as e:
-                error_parser = InputErrorParser(_validator_key)
+                error_parser = InputErrorParser()
 
                 return _output.output(
                     status=ResponseCodes.BAD_REQUEST['invalidQuery'],
