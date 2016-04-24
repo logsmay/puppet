@@ -14,7 +14,7 @@ class InputErrorParser(object):
     @staticmethod
     def __get_field(error):
         error = str(error)
-        return error.replace('data', '', 1)
+        return error[error.find("['"):]
 
     @staticmethod
     def __get_message(error):

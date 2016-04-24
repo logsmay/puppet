@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, BigInteger, String, ForeignKey, DECIMAL
+from sqlalchemy import Column, Integer, BigInteger, String, ForeignKey, DECIMAL, Time
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 
@@ -59,3 +59,31 @@ class AddressGeo(PuppetModel):
 
     address = relationship('Address', back_populates='geographies')
     Address.geographies = relationship('AddressGeo', order_by=id, back_populates='address')
+
+
+class AddressContact(PuppetModel):
+    __tablename__ = 'address_contact'
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    fk_address_id = Column(Integer, ForeignKey(Address.id), nullable=True)
+    email = Column(String(255), nullable=False)
+    first_name = Column(String(255), nullable=False)
+    last_name = Column(String(255), nullable=False)
+    phone_country = Column(String(2), nullable=False)
+    phone_number = Column(Integer, nullable=False)
+    phone_extension = Column(Integer, nullable=True)
+
+    address = relationship('Address', back_populates='contacts')
+    Address.contacts = relationship('AddressContact', order_by=id, back_populates='address')
+
+
+class AddressDispatchTime(PuppetModel):
+    __tablename__ = 'address_dispatch_time'
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    fk_address_id = Column(Integer, ForeignKey(Address.id), nullable=True)
+    start_time = Column(Time, nullable=False)
+    end_time = Column(Time, nullable=False)
+
+    address = relationship('Address', back_populates='dispatch_times')
+    Address.dispatch_times = relationship('AddressDispatchTime', order_by=id, back_populates='address')
