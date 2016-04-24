@@ -2,11 +2,11 @@ import json
 
 from objects.account_base import AccountBase
 from objects.session_base import SessionBase
-from objects.shipper_base import ShipperBase
+from objects.consignor_base import ConsignorBase
 
 session = SessionBase(account_id=1)
 account = AccountBase(account_id=1)
-shipper = ShipperBase(account_id=1)
+shipper = ConsignorBase(account_id=1)
 
 
 def print_status(result):
@@ -18,7 +18,7 @@ def print_body(result):
 
 
 def test(payload):
-    _result = shipper.create_shipper(**payload)
+    _result = shipper.create_consignor(**payload)
 
     print_status(_result)
     print_body(_result)

@@ -1,4 +1,5 @@
 def merge_range(ranges: list, start_key: str, end_key: str):
+    # http://stackoverflow.com/a/36827622/137954
     ranges = sorted(ranges, key=lambda x: x[start_key])
     saved = dict(ranges[0])
 

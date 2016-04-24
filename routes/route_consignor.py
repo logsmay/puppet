@@ -1,18 +1,18 @@
 import json
 
-from objects.shipper_base import ShipperBase
+from objects.consignor_base import ConsignorBase
 
 
-class RouteShipper(object):
+class RouteConsignor(object):
     @staticmethod
     def on_post(req, resp):
-        _shipper = ShipperBase()
+        _consignor = ConsignorBase()
 
         # Request body
         _payload = json.loads(str(req.stream.read(), encoding='utf-8'))
         # Authenticated execution
-        _shipper.register_auth_token(req.auth)
-        _result = _shipper.create_shipper(**_payload)
+        _consignor.register_auth_token(req.auth)
+        _result = _consignor.create_consignor(**_payload)
         # Response handlers
         resp.status = _result.get('status', {}).get('code')
         resp.body = json.dumps(_result)

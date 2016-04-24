@@ -26,7 +26,7 @@ class InputSchema(object):
             Required('password'): str
         })
 
-        self.create_shipper = Schema({
+        self.create_consignor = Schema({
             Required('name'): str,
             Required('description'): str,
             Required('address'): [

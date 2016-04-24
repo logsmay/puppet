@@ -2,7 +2,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from voluptuous import MultipleInvalid
 
 from models.puppet_model import (
-    Shipper,
+    Consignor,
     Address,
     AddressGeo,
     AddressContact,
@@ -16,42 +16,42 @@ from utils.input_validation.input_error_parser import InputErrorParser
 from utils.input_validation.input_validator import InputValidator
 
 
-class ShipperBase(SessionBase):
+class ConsignorBase(SessionBase):
     def __init__(self, account_id=None):
-        super(ShipperBase, self).__init__(account_id=account_id)
+        super(ConsignorBase, self).__init__(account_id=account_id)
 
-    def create_shipper(self, **payload):
+    def create_consignor(self, **payload):
         _output = OutputManager()
 
         try:
             self.protect()
 
-            _validator_key = self.create_shipper.__name__
+            _validator_key = self.create_consignor.__name__
 
             try:
                 # Validate user inputs
                 InputValidator(_validator_key).validate(payload)
 
                 # Extract children values as they will be removed in the next step
-                _shipper_payload = payload
-                _address_payload = _shipper_payload['address']
+                _consignor_payload = payload
+                _address_payload = _consignor_payload['address']
 
                 # Remove nested arrays and dictionaries
-                remove_children(_shipper_payload)
+                remove_children(_consignor_payload)
 
                 # Set account ID as foreign key
-                _shipper_payload.update({
-                    Shipper.fk_account_id.key: self.get_account_id()
+                _consignor_payload.update({
+                    Consignor.fk_account_id.key: self.get_account_id()
                 })
 
                 try:
-                    # Create a new shipper
-                    _new_shipper = Shipper(**_shipper_payload)
-                    self.puppet_db.add(_new_shipper)
+                    # Create a new consignor
+                    _new_consignor = Consignor(**_consignor_payload)
+                    self.puppet_db.add(_new_consignor)
 
-                    # Insert ID of the new shipper
+                    # Insert ID of the new consignor
                     self.puppet_db.flush()
-                    _shipper_insert_id = _new_shipper.id
+                    _consignor_insert_id = _new_consignor.id
 
                     #################
                     # ## Address ## #
@@ -69,9 +69,9 @@ class ShipperBase(SessionBase):
                         # Remove nested arrays and dictionaries
                         remove_children(address)
 
-                        # Set shipper ID as foreign key
+                        # Set consignor ID as foreign key
                         address.update({
-                            Address.fk_shipper_id.key: _shipper_insert_id
+                            Address.fk_consignor_id.key: _consignor_insert_id
                         })
 
                         # Create a new address
