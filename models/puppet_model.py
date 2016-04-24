@@ -9,7 +9,7 @@ class Account(PuppetModel):
     __tablename__ = 'account'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    email = Column(String(255), nullable=False)
+    email = Column(String(255), nullable=False, index=True)
     first_name = Column(String(255), nullable=False)
     last_name = Column(String(255), nullable=False)
     password = Column('password_hash', String(100), nullable=False)
@@ -19,8 +19,8 @@ class Shipper(PuppetModel):
     __tablename__ = 'shipper'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    fk_account_id = Column(Integer, ForeignKey(Account.id), nullable=False)
-    name = Column(String(255), nullable=False)
+    fk_account_id = Column(Integer, ForeignKey(Account.id), nullable=False, index=True)
+    name = Column(String(255), nullable=False, index=True)
     description = Column(String(255), nullable=False)
 
     account = relationship('Account', back_populates='shippers')
@@ -31,7 +31,7 @@ class Address(PuppetModel):
     __tablename__ = 'address'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    fk_shipper_id = Column(Integer, ForeignKey(Shipper.id), nullable=True)
+    fk_shipper_id = Column(Integer, ForeignKey(Shipper.id), nullable=True, index=True)
     organization_name = Column(String(100), nullable=True)
     unit = Column(String(50), nullable=True)
     sub_premise = Column(String(100), nullable=True)
@@ -52,7 +52,7 @@ class AddressGeo(PuppetModel):
     __tablename__ = 'address_geography'
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
-    fk_address_id = Column(Integer, ForeignKey(Address.id), nullable=True)
+    fk_address_id = Column(Integer, ForeignKey(Address.id), nullable=True, index=True)
     latitude = Column(DECIMAL(8, 6), nullable=True)
     longitude = Column(DECIMAL(9, 6), nullable=True)
     accuracy = Column('geo_accuracy', Integer, nullable=True)
@@ -65,7 +65,7 @@ class AddressContact(PuppetModel):
     __tablename__ = 'address_contact'
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
-    fk_address_id = Column(Integer, ForeignKey(Address.id), nullable=True)
+    fk_address_id = Column(Integer, ForeignKey(Address.id), nullable=True, index=True)
     email = Column(String(255), nullable=False)
     first_name = Column(String(255), nullable=False)
     last_name = Column(String(255), nullable=False)
@@ -81,7 +81,7 @@ class AddressDispatchTime(PuppetModel):
     __tablename__ = 'address_dispatch_time'
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
-    fk_address_id = Column(Integer, ForeignKey(Address.id), nullable=True)
+    fk_address_id = Column(Integer, ForeignKey(Address.id), nullable=True, index=True)
     start_time = Column(Time, nullable=False)
     end_time = Column(Time, nullable=False)
 

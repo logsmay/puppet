@@ -11,7 +11,7 @@ from models.puppet_model import (
 from objects.io.output_manager import OutputManager
 from objects.io.response_codes import ResponseCodes
 from objects.session_base import SessionBase, InvalidSession
-from utils.functions import remove_children
+from utils.functions import remove_children, merge_range
 from utils.input_validation.input_error_parser import InputErrorParser
 from utils.input_validation.input_validator import InputValidator
 
@@ -101,6 +101,14 @@ class ShipperBase(SessionBase):
                         #######################
                         # ## Dispatch time ## #
                         #######################
+                        # Find overlaps in time ranges and merge them when possible
+                        _dispatch_time_payload = list(merge_range(
+                            ranges=_dispatch_time_payload,
+                            start_key=AddressDispatchTime.start_time.key,
+                            end_key=AddressDispatchTime.end_time.key
+                        ))
+
+                        # Iterate and store
                         for dispatch_time in _dispatch_time_payload:
                             # Remove nested arrays and dictionaries
                             remove_children(dispatch_time)
